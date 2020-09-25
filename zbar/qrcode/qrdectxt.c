@@ -32,6 +32,7 @@ static int text_is_latin1(const unsigned char *_text,int _len){
   return 1;
 }
 
+#ifdef BIG5_DETECT
 static int text_is_big5(const unsigned char *_text, int _len){
   int i;
   for(i=0;i<_len;i++){
@@ -49,6 +50,7 @@ static int text_is_big5(const unsigned char *_text, int _len){
   }
   return 1;
 }
+#endif
 
 static void enc_list_mtf(iconv_t _enc_list[3],iconv_t _enc){
   int i;
@@ -285,10 +287,11 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
                 enc_list_mtf(enc_list,utf8_cd);
               }
               /* Check if it's big5 encoding. */
+#ifdef BIG5_DETECT
               else if(text_is_big5((unsigned char *)in,inleft)){
                 enc_list_mtf(enc_list,big5_cd);
               }
-
+#endif
               /*Try our list of encodings.*/
               for(ei=0;ei<4;ei++)if(enc_list[ei]!=(iconv_t)-1){
                 /*According to the 2005 version of the standard,
