@@ -16,4 +16,10 @@ COPY . /src/zbar
 WORKDIR /src/zbar
 RUN autoreconf -vfi \
     && ./configure --disable-doc --disable-dependency-tracking --disable-video --without-gtk --without-java --without-qt --without-python \
-    && make
+    && make \
+    && make install
+
+WORKDIR /root
+RUN rm -rf /scr/zbar
+
+ENTRYPOINT [ "/bin/bash" ]
