@@ -259,12 +259,14 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
               else {
               int ei;
               /*If there was data encoded in kanji mode, assume it's SJIS.*/
+#ifdef KANJI_DETECT
               if(has_kanji)enc_list_mtf(enc_list,sjis_cd);
+#endif
               /*Otherwise check for the UTF-8 BOM.
                 UTF-8 is rarely specified with ECI, and few decoders
                  currently support doing so, so this is the best way for
                  encoders to reliably indicate it.*/
-              else if(inleft>=3&&
+              if(inleft>=3&&
                in[0]==(char)0xEF&&in[1]==(char)0xBB&&in[2]==(char)0xBF){
                 in+=3;
                 inleft-=3;
@@ -294,10 +296,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
 #endif
               /*Try our list of encodings.*/
               for(ei=0;ei<4;ei++)if(enc_list[ei]!=(iconv_t)-1){
-                /*Disable all encodings but UTF8*/
-                if(ei==0||ei==1||ei==2){
-                  continue;
-                }
+                if (ei==0||ei==2) continue;
                 /*According to the 2005 version of the standard,
                    ISO/IEC 8859-1 (one hyphen) is supposed to be used, but
                    reality is not always so (and in the 2000 version of the
