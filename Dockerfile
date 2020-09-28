@@ -17,9 +17,11 @@ WORKDIR /src/zbar
 RUN autoreconf -vfi \
     && ./configure --disable-doc --disable-dependency-tracking --disable-video --without-gtk --without-java --without-qt --without-python \
     && make \
-    && make install
+    && make install \
+    && cp /usr/local/lib/libzbar.so.0.3.0 /usr/lib \
+    && ln -s /usr/local/lib/libzbar.so.0.3.0 /usr/lib/libzbar.so.0
 
 WORKDIR /root
 RUN rm -rf /scr/zbar
 
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/usr/local/bin/zbarimg" ]
