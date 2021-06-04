@@ -95,7 +95,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
 #ifdef ALL_ENCODINGS
     iconv_t                   enc_list[4];
 #else
-    iconv_t                   enc_list[0];
+    iconv_t                   enc_list[2];
 #endif
     iconv_t                   eci_cd;
     int                       sa[16];
@@ -191,6 +191,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
     eci=-1;
 #ifndef ALL_ENCODINGS
     enc_list[0]=utf8_cd;
+    enc_list[1]=latin1_cd;
 #else
     enc_list[0]=sjis_cd;
     enc_list[1]=latin1_cd;
@@ -305,7 +306,9 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
 #endif
               /*Try our list of encodings.*/
               for(ei=0;ei<enc_list_size;ei++)if(enc_list[ei]!=(iconv_t)-1){
+#ifdef ALL_ENCODINGS
                 if (ei==0||ei==2) continue;
+#endif
                 /*According to the 2005 version of the standard,
                    ISO/IEC 8859-1 (one hyphen) is supposed to be used, but
                    reality is not always so (and in the 2000 version of the
