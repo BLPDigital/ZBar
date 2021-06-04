@@ -92,7 +92,11 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
   for(i=0;i<nqrdata;i++)if(!mark[i]){
     const qr_code_data       *qrdataj;
     const qr_code_data_entry *entry;
+#ifdef ALL_ENCODINGS
     iconv_t                   enc_list[4];
+#else
+    iconv_t                   enc_list[2];
+#endif
     iconv_t                   eci_cd;
     int                       sa[16];
     int                       sa_size;
@@ -185,10 +189,16 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
       else sa_text[sa_ntext++]=(char)(fnc1_2ai-100);
     }
     eci=-1;
+#ifndef ALL_ENCODINGS
+    enc_list[0]=utf8_cd;
+    enc_list[1]=latin1_cd;
+#else
     enc_list[0]=sjis_cd;
     enc_list[1]=latin1_cd;
     enc_list[2]=big5_cd;
     enc_list[3]=utf8_cd;
+#endif
+    int enc_list_size = sizeof enc_list / sizeof enc_list[0];
     eci_cd=(iconv_t)-1;
     err=0;
 
@@ -259,12 +269,14 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
               else {
               int ei;
               /*If there was data encoded in kanji mode, assume it's SJIS.*/
+#ifdef KANJI_DETECT
               if(has_kanji)enc_list_mtf(enc_list,sjis_cd);
+#endif
               /*Otherwise check for the UTF-8 BOM.
                 UTF-8 is rarely specified with ECI, and few decoders
                  currently support doing so, so this is the best way for
                  encoders to reliably indicate it.*/
-              else if(inleft>=3&&
+              if(inleft>=3&&
                in[0]==(char)0xEF&&in[1]==(char)0xBB&&in[2]==(char)0xBF){
                 in+=3;
                 inleft-=3;
@@ -293,7 +305,10 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
               }
 #endif
               /*Try our list of encodings.*/
-              for(ei=0;ei<4;ei++)if(enc_list[ei]!=(iconv_t)-1){
+              for(ei=0;ei<enc_list_size;ei++)if(enc_list[ei]!=(iconv_t)-1){
+#ifdef ALL_ENCODINGS
+                if (ei==0||ei==2) continue;
+#endif
                 /*According to the 2005 version of the standard,
                    ISO/IEC 8859-1 (one hyphen) is supposed to be used, but
                    reality is not always so (and in the 2000 version of the
@@ -305,12 +320,14 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
                    number of seldom-used control code characters there.
                   So if we see any of those characters, move this
                    conversion to the end of the list.*/
+#ifndef ALL_ENCODINGS
                 if(ei<3&&enc_list[ei]==latin1_cd&&
                  !text_is_latin1((unsigned char *)in,inleft)){
                   int ej;
-                  for(ej=ei+1;ej<4;ej++)enc_list[ej-1]=enc_list[ej];
-                  enc_list[3]=latin1_cd;
+                  for(ej=ei+1;ej<enc_list_size;ej++)enc_list[ej-1]=enc_list[ej];
+                  enc_list[enc_list_size - 1]=latin1_cd;
                 }
+#endif
                 err=iconv(enc_list[ei],&in,&inleft,&out,&outleft)==(size_t)-1;
                 if(!err){
                   sa_ntext=out-sa_text;
