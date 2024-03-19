@@ -1,6 +1,4 @@
 steps:
-  - name: "gcr.io/kaniko-project/executor:latest"
+  - name: gcr.io/kaniko-project/executor:v1.21.1
     args:
-      - --destination=gcr.io/$PROJECT_ID/zbar:$SHORT_SHA
-      - --cache=true
-      - --cache-ttl=96h
+      - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/us-central1-docker/zbar:$SHORT_SHA
